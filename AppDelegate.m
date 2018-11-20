@@ -9,7 +9,9 @@
 #import "AppDelegate.h"
 #import "ViewController.h"
 @interface AppDelegate ()
-
+{
+    BOOL isUseScreenShots;
+}
 @end
 
 @implementation AppDelegate
@@ -18,9 +20,59 @@
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
 
 
+    
+    [[NSNotificationCenter defaultCenter]addObserver:self selector:@selector(didUseScreenShot) name:UIApplicationUserDidTakeScreenshotNotification object:nil];
+    
     return YES;
 }
 
+-(void)didUseScreenShot{
+    
+    NSLog(@"用户使用了截屏操作");
+    if (isUseScreenShots==NO) {
+        
+        dispatch_async(dispatch_get_main_queue(), ^{
+         __block  isUseScreenShots = YES;
+
+            UIView *view = [[UIView alloc]initWithFrame:[UIScreen mainScreen].bounds];
+            
+            view.backgroundColor = [UIColor colorWithWhite:0 alpha:0.7];
+            [[UIApplication sharedApplication].keyWindow addSubview:view];
+            
+            
+            UIImageView *imgView = [[UIImageView alloc]initWithFrame:CGRectMake(10, 10, 320-20, 300)];
+            
+            imgView.image = [self getImgage];
+            [view addSubview:imgView];
+            
+            UIButton *btn = [[UIButton alloc]initWithFrame:CGRectMake(20,[UIScreen mainScreen].bounds.size.height-50 , 100, 30)];
+            btn.backgroundColor = [UIColor redColor];
+            [view addSubview:btn];
+            
+            [btn addTarget:self action:@selector(reoveiView:) forControlEvents:UIControlEventTouchUpInside];
+            
+            
+        });
+    }
+}
+
+-(void)reoveiView:(UIButton*)sender{
+    isUseScreenShots = YES;
+
+    [sender.superview removeFromSuperview];
+    
+}
+
+-(UIImage *)getImgage{
+    
+    UIGraphicsBeginImageContext([UIScreen mainScreen].bounds.size);
+    
+    [[UIApplication sharedApplication].windows[0].layer renderInContext:UIGraphicsGetCurrentContext()];
+    UIImage *img = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    
+    return img;
+}
 
 - (void)applicationWillResignActive:(UIApplication *)application {
     // Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
